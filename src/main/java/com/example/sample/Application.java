@@ -5,13 +5,16 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 
 @SpringBootApplication
 public class Application {
@@ -27,6 +30,12 @@ public class Application {
     @Controller
     static class ExampleController {
 
+        private final TokenStorage tokenStorage;
+
+        ExampleController(TokenStorage tokenStorage) {
+            this.tokenStorage = tokenStorage;
+        }
+
         @GetMapping("/")
         String home() {
             return "home";
@@ -34,8 +43,16 @@ public class Application {
 
         @GetMapping("/profile")
         @PreAuthorize("hasAuthority('SCOPE_profile')")
-        ModelAndView userDetails(OAuth2AuthenticationToken authentication) {
-            return new ModelAndView("userProfile", Collections.singletonMap("details", authentication.getPrincipal().getAttributes()));
+        ModelAndView userDetails(OAuth2AuthenticationToken authentication) throws IOException {
+            final String token = ((OidcUser) authentication.getPrincipal()).getIdToken().getTokenValue();
+            tokenStorage.safe(token);
+
+            var attributes = authentication.getPrincipal().getAttributes();
+            final var mutableAttributes = new HashMap<>(attributes);
+
+            mutableAttributes.put("token", token);
+            return new ModelAndView("userProfile",
+                    Collections.singletonMap("details", mutableAttributes));
         }
     }
 

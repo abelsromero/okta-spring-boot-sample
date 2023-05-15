@@ -60,6 +60,14 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <environmentVariables>
+                        <environmentVariable>okta_oauth2_issuer</environmentVariable>
+                        <environmentVariable>okta_oauth2_client_id</environmentVariable>
+                        <environmentVariable>okta_oauth2_client_secret</environmentVariable>
+                        <environmentVariable>token_file</environmentVariable>
+                    </environmentVariables>
+                </configuration>
             </plugin>
         </plugins>
     </build>
